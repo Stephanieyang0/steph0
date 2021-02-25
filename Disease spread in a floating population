@@ -1,0 +1,124 @@
+import numpy as np  
+import matplotlib.pyplot as plt  
+import time
+from pylab import mpl
+
+
+# Total population
+sum_of_human = 2000
+# Time of the incubation period
+incubation_period = 14
+# Time for the infectious to go the hospital
+treat_willingness=40
+isolation_all_day=incubation_period+treat_willingness
+# Recovery rate
+recovered_param = 0.2
+# Infectious spread area 
+infection_area = 0.02
+# Moving parameter 
+move_area_param =0.3
+# Initial number of infectious
+first_infected_cnt = 10
+
+plt.figure(figsize=(18, 14), dpi=80)
+plt.ion()
+
+
+def get_normal_list(mu=0.0, sigma=0.7, sampleNo=sum_of_human, seed=0):
+    '''
+    :param mu: symmetry axis
+    :param sigma: variance
+    :param sampleNo: number of samples
+    :return:
+    '''
+    if seed:
+        np.random.seed(seed)
+    else:
+        np.random.seed(round(time.time() * 100000) % 10000)
+    if sigma < 0:
+        sigma = 0
+    s = np.random.normal(mu, sigma, sampleNo)
+    return s
+
+
+x1 = get_normal_list(seed=1, sampleNo=int(sum_of_human / 2))
+x2 = get_normal_list(seed=2, sampleNo=int(sum_of_human / 2))
+x = get_normal_list(seed=3, sampleNo=sum_of_human)
+y1 = get_normal_list(seed=5, sampleNo=int(sum_of_human / 2))
+y2 = get_normal_list(seed=6, sampleNo=int(sum_of_human / 2))
+
+np.random.seed(10)
+first_infected_cnt_index = np.random.randint(0, sum_of_human, size=first_infected_cnt)
+infected_index_set = set(first_infected_cnt_index)
+infected_index_history = []
+infected_index_history.append(infected_index_set)
+print('Initial number of infectious', infected_index_set)
+
+recovery_set=set()
+plt_x_recovered=np.array([])
+plt_y_recovered = np.array([])
+plt_x_sick=np.array([])
+plt_y_sick=np.array([])
+
+move_mu = 0
+move_sigma = 0.01*move_area_param
+for day in range(1, 1000):
+    plt.cla()
+    plt.grid(False)
+    # Population move
+    move_x1 = get_normal_list(mu=move_mu , sigma=move_sigma, sampleNo=int(sum_of_human / 2))
+    move_x2 = get_normal_list(mu=-move_mu , sigma=move_sigma, sampleNo=int(sum_of_human / 2))
+    move_y1 = get_normal_list(mu=move_mu , sigma=move_sigma, sampleNo=int(sum_of_human / 2))
+    move_y2 = get_normal_list(mu=-move_mu , sigma=move_sigma, sampleNo=int(sum_of_human / 2))
+    x1 = x1 + move_x1
+    x2 = x2 + move_x2
+    y1 = y1 + move_y1
+    y2 = y2 + move_y2
+
+    plt_x = np.concatenate((x1, x2), axis=0)
+    plt_y = np.concatenate((y1, y2), axis=0)
+
+    set_infected_index_today=set()
+    for infected_index in infected_index_set:
+        infected_point = (plt_x[infected_index], plt_y[infected_index])
+        infected_array_index_today = np.where(
+            (plt_x > infected_point[0] - infection_area) & (plt_x < infected_point[0] + infection_area) \
+            & (plt_y > infected_point[1] - infection_area) & (plt_y < infected_point[1] + infection_area))
+        infected_array_index_today=infected_array_index_today[0]
+        set_infected_index_today=set_infected_index_today|set(infected_array_index_today)
+
+    # Number of exposed
+    plt_x_infection=plt_x[list(infected_index_set)]
+    plt_y_infection=plt_y[list(infected_index_set)]
+    
+    # Number of isolated
+    if day>=incubation_period:
+        plt_x_sick=plt_x[list(infected_index_history[day-incubation_period])]
+        plt_y_sick = plt_y[list(infected_index_history[day - incubation_period])]
+      
+    # Number of recovered
+    
+        plt_x_recovered = plt_x[list(recovered_set)]
+        plt_y_recovered = plt_y[list(recovered_set)]
+
+    plt.xlim((-2, 2))
+    plt.ylim((-2, 2))
+    plt.axis('off')
+    
+    # Susceptible
+    plt.scatter(plt_x, plt_y, alpha='0.7', marker='.',label='S')  # Draw scatter plot transparency rate 0.6
+
+    # Exposed
+    plt.scatter(plt_x_infection, plt_y_infection, c='yellow',alpha='0.7', marker='.',label='E')
+    
+    # Infection
+    if day >= incubation_period:
+        plt.scatter(plt_x_sick, plt_y_sick, c='red', alpha='0.8', marker='.',label='I')
+        
+    # Recovered
+    if day >= isolation_all_day:
+        plt.scatter(plt_x_isolation, plt_y_recovered, c='white', marker='.')
+
+    plt.legend(loc='upper right')
+    plt.pause(0.0001)
+    
