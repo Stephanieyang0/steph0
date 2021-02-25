@@ -1,0 +1,42 @@
+import scipy.integrate as spi
+import numpy as np
+import matplotlib.pyplot as plt
+N = 66500000
+beta = 0.6
+gamma = 0.1
+# μ is the new birth rate  
+μ = 0.0114
+# v is the natural death rat
+v = 0.0093
+# α is the second infection rate of recovered who don’t have antibody or virus remained
+α = 0.001
+Te = 14
+Tv = 233
+I_0 = 66
+E_0 = 0
+R_0 = 0
+S_0 = 0
+S_0 = N - I_0 - E_0 - R_0
+T = 500
+INI = (S_0,E_0,I_0,R_0)
+def funcSEIR(invalue,_):
+    Y = np.zeros(4)
+    X = invalue
+    Y[0] = - (beta * X[0] * X[2]) / N + (μ * N)- (v * X[0]) - 0.7083 * X[1] / Tv
+    Y[1] = (beta * X[0] * X[2]) / N - 0.6 * X[1] / Te -(v * X[1])
+    Y[2] = 0.6 * X[1] / Te - gamma * X[2] - v * X[2]+ α * X[3]
+    Y[3] = gamma * X[2] - v * X[3]- α * X[3] 
+    return Y
+    
+T_range = np.arange(0,T+1)
+RES = spi.odeint(funcSEIR,INI,T_range)
+
+plt.plot(RES[:,0], color = 'darkblue', label = 'Susceptible', marker = '.')
+plt.plot(RES[:,1], color = 'orange', label = 'Exposed', marker = '.')
+plt.plot(RES[:,2], color = 'red', label = 'Infection', marker = '.')
+plt.plot(RES[:,3], color = 'green', label = 'Recovery', marker = '.')
+
+plt.legend()
+plt.xlabel('Day')
+plt.ylabel('Number of people')
+plt.show()
