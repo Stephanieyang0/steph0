@@ -1,0 +1,24 @@
+import matplotlib as plt
+import numpy as np
+import math
+
+def f(x):
+    return 1/x * (1 + math.log(x*66499934))
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+data = []
+for i in range (1,100):
+    data.append(f(i))
+    
+plt.plot(data, label='f(x)')
+plt.grid()
+plt.yscale("log")
+plt.title('Change of the number of the susceptibles due to the contact ratio r')
+plt.xlabel('contact ratio r')
+plt.ylabel('f(x)')
+plt.show()
+
+plt.legend()
+plt.show()
